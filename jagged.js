@@ -1,8 +1,7 @@
 
 // ---------------------------------------------------------
-// This is a library that uses javascript to create seamless
-// borders around overlapping html elements to make a set of 
-// elements appear as if they shared one common border.
+// Create seamless borders around overlapping html elements 
+// to make them appear as if they shared one common border.
 //
 // For example:
 //
@@ -18,9 +17,6 @@
 //                ``````````````   |     |
 //                                 ```````
 //
-// This was just a quick idea I had and I was surprised to
-// see that no one seems to have tackled this problem yet.
-//
 // For now the implementation will be based on css classes.
 // eg: 
 //    new Jagged('my-class').border('1px solid #999');
@@ -30,6 +26,12 @@
 //     .. do stuff
 //    ducks.border('1px solid blue'); 
 //
+//  With options:
+//    var ducks = new Jagged('ducks', 'bottom', 'left')
+//    ducks.border('1px solid red', '4px') // 4px rounded corners
+//    
+//
+//
 // ToDo's:
 //     - Ability to round corners.
 //     - Shadows.
@@ -37,18 +39,20 @@
 //     - Have text and inline elements.
 //       within bordered areas wrap around 
 //       overlapping elements.
+//
+// Oh man, why... I have found a much, much 
+// simpler way to do it      
 // --------------------------------------------------------
 
 var Jagged = (function($){
 
     // For each element A, finds all overlapping elements
-    // and stores the resulting array as an attribute of A.
     function getOverlappingElements(className){
         var elems = document.getElementsByClassName(className);
         var positionEls = [];
         // Save positions in allPos:
         for(var i=0; il=elems.length; i< il; i++){
-            var el = $(all[i]);
+            var el = $(elems[i]);
             var elPos = el.offset();
             positionEls.push({
                 'left':   elPos.left,
@@ -60,7 +64,11 @@ var Jagged = (function($){
                 'leftOverlaps': [],
                 'rightOverlaps': [],
                 'topOverlaps': [],
-                'bottomOverlaps': []
+                'bottomOverlaps': [],
+                'leftNonOverlaps': [],
+                'rightNonOverlaps': [],
+                'topNonOverlaps': [],
+                'bottomNonOverlaps': []
             });
         }
         // Determine overlaps. n^2 is the best I can do.
@@ -72,8 +80,15 @@ var Jagged = (function($){
             }
             getExposedBorders(a);
         }
-        return positionEls;
+       return positionEls;
     }
+
+    function findCorners(){
+
+    }
+
+
+
 
     function getExposedBorders(p){
         // 1. First find the overlapping portions of p's edges:
@@ -106,13 +121,40 @@ var Jagged = (function($){
                 p.rightOverlaps.push(overlapV);
             }
         }
-        // 2. Find the non-overlapping portions:
-        var allOverlaps = [p.topOverlaps, p.bottomOverlaps, p.leftOverlaps, p.rightOverlaps];
-        $.each( allOverlaps , function(idx, overlaps){
-            $.each( overlaps, function(idx2, o){
-                // saving work..
-            });
+
+        // sort overlaps
+        $.each([p.topOverlaps,p.bottomOverlaps,p.leftOverlaps,p.rightOverlaps], function(z,o){
+            o.sort(function(a,b){ return a[0]-b[0]; });
         });
+        // 2. Find the non-overlapping portions:
+        p.topNonOverlaps = getNonOverlapping(p.topOverlaps,'v');
+        p.bottomNonOverlaps = getNonOverlapping(p.bottomOverlaps,'v');
+        p.leftNonOverlaps = getNonOverlapping(p.leftOverlaps,'h');
+        p.rightNonOverlaps = getNonOverlapping(p.rightOverlaps,'h');
+        
+        function getNonOverlapping(overlaps, s){
+            var nonOverlaps = [];
+            if (s === 'h'){
+                var pEnd = p.bottom-p.top;
+            } else if (s === 'v'){
+                var pEnd = p.right-p.left;   
+            }
+            var currEnd=0;
+            $.each( overlaps , function(idx, overlap){
+                var thisStart = overlap[0];
+                var thisEnd = overlap[1];
+                if(thisStart > currEnd){
+                    nonOverlaps.push([currEnd, thisStart]);
+                }
+                if(thisEnd > currEnd){
+                    currEnd = thisEnd;
+                }
+            });
+            if (currEnd < pEnd){
+                nonOverlaps.push([]);
+            }
+            return nonOverlaps;
+        }
     }
     // Checks if integer x is between a and b
     function isBetween(x,a,b){
@@ -138,12 +180,29 @@ var Jagged = (function($){
         return overlap;
     }
 
-    return function(className){
+    function createBorderElements(){
         
-        this.overlappingElements = getOverlappingElements(className);
+    }
+
+
+    return function(className){
+       
+        this.elements=[]; 
+        this.options=[];
+
+        var __construct = function(that){
+            that.elements = document.getElementsByClassName(className);
+            for(var i = 1; l = that.arguments.length; i<l; i++){
+                that.options.push(that.arguments[i]);
+            }
+        }(this);
+
+
+
+        this.overlappingElements = getOverlappingElements();
         
 
-        this.border = function(style){
+        this.border = function(style, cornerRadius=''){
              console.log("border");
              console.log(style);
         };
