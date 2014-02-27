@@ -50,7 +50,7 @@ var Jagged = (function($){
     function getOverlappingElements(className){
         var elems = document.getElementsByClassName(className);
         var positionEls = [];
-        // Save positions in allPos:
+        // Save each els position in positionEls
         for(var i=0; i< elems.length; i++){
             var el = $(elems[i]);
             var elPos = el.offset();
@@ -73,7 +73,7 @@ var Jagged = (function($){
         }
         // Determine overlaps. n^2 is the best I can do.
         for(var a=0; a<positionEls.length; a++){
-            for(var b=0; b< al; b++){
+            for(var b=0; b< positionEls.length; b++){
                 if( comparePos(positionEls[a], positionEls[b]) ){
                     a.overlapsWith.push(positionEls[b]);
                 }
@@ -132,30 +132,33 @@ var Jagged = (function($){
         p.leftNonOverlaps = getNonOverlapping(p.leftOverlaps,'h');
         p.rightNonOverlaps = getNonOverlapping(p.rightOverlaps,'h');
         
-        function getNonOverlapping(overlaps, s){
-            var nonOverlaps = [];
-            if (s === 'h'){
-                var pEnd = p.bottom-p.top;
-            } else if (s === 'v'){
-                var pEnd = p.right-p.left;   
-            }
-            var currEnd=0;
-            $.each( overlaps , function(idx, overlap){
-                var thisStart = overlap[0];
-                var thisEnd = overlap[1];
-                if(thisStart > currEnd){
-                    nonOverlaps.push([currEnd, thisStart]);
-                }
-                if(thisEnd > currEnd){
-                    currEnd = thisEnd;
-                }
-            });
-            if (currEnd < pEnd){
-                nonOverlaps.push([]);
-            }
-            return nonOverlaps;
-        }
     }
+
+    // Finds the inverse of the overlapping portions for an element
+    function getNonOverlapping(overlaps, s){
+        var nonOverlaps = [];
+        if (s === 'h'){
+            var pEnd = p.bottom-p.top;
+        } else if (s === 'v'){
+            var pEnd = p.right-p.left;   
+        }
+        var currEnd=0;
+        $.each( overlaps , function(idx, overlap){
+            var thisStart = overlap[0];
+            var thisEnd = overlap[1];
+            if(thisStart > currEnd){
+                nonOverlaps.push([currEnd, thisStart]);
+            }
+            if(thisEnd > currEnd){
+                currEnd = thisEnd;
+            }
+        });
+        if (currEnd < pEnd){
+            nonOverlaps.push([]);
+        }
+        return nonOverlaps;
+    }
+
     // Checks if integer x is between a and b
     function isBetween(x,a,b){
         if( (x >= a) && (x <= b) ){
