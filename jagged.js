@@ -51,7 +51,7 @@ var Jagged = (function($){
         var elems = document.getElementsByClassName(className);
         var positionEls = [];
         // Save positions in allPos:
-        for(var i=0; il=elems.length; i< il; i++){
+        for(var i=0; i< elems.length; i++){
             var el = $(elems[i]);
             var elPos = el.offset();
             positionEls.push({
@@ -72,7 +72,7 @@ var Jagged = (function($){
             });
         }
         // Determine overlaps. n^2 is the best I can do.
-        for(var a=0; al=positionEls.length; a< al; a++){
+        for(var a=0; a<positionEls.length; a++){
             for(var b=0; b< al; b++){
                 if( comparePos(positionEls[a], positionEls[b]) ){
                     a.overlapsWith.push(positionEls[b]);
@@ -92,7 +92,7 @@ var Jagged = (function($){
 
     function getExposedBorders(p){
         // 1. First find the overlapping portions of p's edges:
-        for(var a=0; l = p.overlapsWith.length; a<l; a++){
+        for(var a=0; a< p.overlapsWith.length; a++){
             var p2 = p.overlapsWith[a];
             // horizontal overlapping range:
             var overlapH = [
@@ -192,8 +192,10 @@ var Jagged = (function($){
 
         var __construct = function(that){
             that.elements = document.getElementsByClassName(className);
-            for(var i = 1; l = that.arguments.length; i<l; i++){
-                that.options.push(that.arguments[i]);
+            if(typeof that.arguments !== 'undefined'){
+                for(var i = 1; i< that.arguments.length; i++){
+                    that.options.push(that.arguments[i]);
+                }
             }
         }(this);
 
@@ -202,7 +204,7 @@ var Jagged = (function($){
         this.overlappingElements = getOverlappingElements();
         
 
-        this.border = function(style, cornerRadius=''){
+        this.border = function(style, cornerRadius){
              console.log("border");
              console.log(style);
         };
