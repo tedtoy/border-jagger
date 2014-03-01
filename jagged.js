@@ -40,15 +40,15 @@
 //       within bordered areas wrap around 
 //       overlapping elements.
 //
-// Oh man, why... I have found a much, much 
-// simpler way to do it      
 // --------------------------------------------------------
 
 var Jagged = (function($){
+    
+    'use strict';
 
-    // For each element A, finds all overlapping elements
-    function getOverlappingElements(className){
-        var elems = document.getElementsByClassName(className);
+    // Creates an object literal for each element
+    // and finds all overlapping and exposed borders.
+    function getOverlappingElements(elems){
         var positionEls = [];
         // Save each els position in positionEls
         for(var i=0; i< elems.length; i++){
@@ -60,11 +60,12 @@ var Jagged = (function($){
                 'top':    elPos.top,
                 'bottom': elPos.top + el.height(),
                 'overlapsWith': [],
-                // defined as vertical ranges:
+
                 'leftOverlaps': [],
                 'rightOverlaps': [],
                 'topOverlaps': [],
                 'bottomOverlaps': [],
+
                 'leftNonOverlaps': [],
                 'rightNonOverlaps': [],
                 'topNonOverlaps': [],
@@ -78,19 +79,100 @@ var Jagged = (function($){
                     a.overlapsWith.push(positionEls[b]);
                 }
             }
-            getExposedBorders(a);
+            // Store the positions of the exposed sides for 
+            // each element in the 'NonOverlaps' arrays.
+            identifyNonOverlappingBorders(positionEls[a]);
         }
-       return positionEls;
+        return positionEls;
     }
 
     function findCorners(){
+        // ...todo
+    }
 
+
+// overlappingElements needs a better name //
+    
+    function drawAllBorders(that){
+        $.each(that.overlappingElements, function(idx,el){
+            drawBorder(el);
+        });
+    }
+
+    // For each element, draw its non overlapping borders
+    // relative to itself:
+    // todo: Use one DRY collection for non over-laps
+    function drawBorder(p){
+        $.each(p.topNonOverlaps, function(idx,nonoverlap){
+            _addBorder(p, nonoverlap, 'top');
+        });
+        $.each(p.bottomNonOverlaps, function(idx,nonoverlap){
+            _addBorder(p, nonoverlap, 'bottom');
+        });
+        $.each(p.leftNonOverlaps, function(idx,nonoverlap){
+            _addBorder(p, nonoverlap, 'left');
+        });
+        $.each(p.rightNonOverlaps, function(idx,nonoverlap){
+            _addBorder(p, nonoverlap, 'right');
+        });
+    }
+
+    // Adds a div that creates a border at the given position 
+    function _addBorderEl(p, nonoverlap, borderType){
+        var ptop, pbottom, pleft, pright, pwidth, pheight, styleStr;
+        if(borderType === 'top'){
+            ptop = 0;
+            pheight = 1; // ?
+            pleft = nonoverlap[0];
+            pwidth = nonoverlap[1]-nonoverlap[0];
+        } else if ( borderType ==='bottom' ){
+            pbottom = 0;  
+            pheight = 1; // ?
+            pleft = nonoverlap[0];
+            pwidth = nonoverlap[1]-nonoverlap[0];
+        } else if ( borderType ==='left' ){
+            pleft = 0;
+            pwidth = 1;
+            ptop = nonoverlap[0];
+            pheight = nonoverlap[1]-nonoverlap[0];
+        } else if ( borderType ==='right' ){
+            pright = 0;
+            pwidth = 1;
+            ptop = nonoverlap[0];
+            pheight = nonoverlap[1]-nonoverlap[0];
+        }
+        styleStr = "position: absolute; background-color:#ccc;";
+        if (typeof pheight !== 'undefined'){
+            styleStr += "height: " + pheight + "px;";
+        }
+        if (typeof pwidth !== 'undefined'){
+            styleStr += "width: " + pwidth + "px;";
+        }
+        if (typeof ptop !== 'undefined'){
+            styleStr += "top: " + ptop + "px;";
+        }
+        if (typeof pbottom !== 'undefined'){
+            styleStr += "bottom: " + pbottom + "px;";
+        }
+        if (typeof pleft !== 'undefined'){
+            styleStr += "left: " + pleft + "px;";
+        }
+        if (typeof pright !== 'undefined'){
+            styleStr += "right: " + pright + "px;";
+        }
+        $('<div/>', {
+            class: "brdr",
+            style: "position: absolute;"
+            text:  "&nbsp;"
+        }).appendTo($(p));
+         
     }
 
 
 
-
-    function getExposedBorders(p){
+    //function addExposedBorders(p){
+    function identifyNonOverlappingBorders(p){
+        // calls 'getNonOverlapping()'
         // 1. First find the overlapping portions of p's edges:
         for(var a=0; a< p.overlapsWith.length; a++){
             var p2 = p.overlapsWith[a];
@@ -121,25 +203,22 @@ var Jagged = (function($){
                 p.rightOverlaps.push(overlapV);
             }
         }
-
         // sort overlaps
         $.each([p.topOverlaps,p.bottomOverlaps,p.leftOverlaps,p.rightOverlaps], function(z,o){
             o.sort(function(a,b){ return a[0]-b[0]; });
         });
+
         // 2. Find the non-overlapping portions:
         p.topNonOverlaps = getNonOverlapping(p.topOverlaps,'v');
         p.bottomNonOverlaps = getNonOverlapping(p.bottomOverlaps,'v');
         p.leftNonOverlaps = getNonOverlapping(p.leftOverlaps,'h');
         p.rightNonOverlaps = getNonOverlapping(p.rightOverlaps,'h');
-        
     }
 
     // Finds the inverse of the overlapping portions for an element
     function getNonOverlapping(overlaps, s){
         var nonOverlaps = [];
         if (s === 'h'){
-            var pEnd = p.bottom-p.top;
-        } else if (s === 'v'){
             var pEnd = p.right-p.left;   
         }
         var currEnd=0;
@@ -159,6 +238,13 @@ var Jagged = (function($){
         return nonOverlaps;
     }
 
+    // 
+    function createBorderElements(){
+        
+    }
+
+    // -- Helpers --
+
     // Checks if integer x is between a and b
     function isBetween(x,a,b){
         if( (x >= a) && (x <= b) ){
@@ -167,26 +253,17 @@ var Jagged = (function($){
             return false;
         }
     }
-
-    
-
+    // Determine if p1 overlaps p2
     function comparePos(p1, p2){
-        // Determine if p1 overlaps p2
-        var overlap = false;
         // overlap horizontally?
         if( (p1.left >= p2.left) && (p1.left <= p2.right) ){
             // vertically?
             if( (p1.top >= p2.top) && (p1.top <= p2.bottom) ){
-                overlap = true;
+                return true;
             }
         }
-        return overlap;
+        return false;
     }
-
-    function createBorderElements(){
-        
-    }
-
 
     return function(className){
        
@@ -194,18 +271,16 @@ var Jagged = (function($){
         this.options=[];
 
         var __construct = function(that){
+            // elements:
             that.elements = document.getElementsByClassName(className);
+            that.overlappingElements = getOverlappingElements(that.elements);
+            // populate options:
             if(typeof that.arguments !== 'undefined'){
                 for(var i = 1; i< that.arguments.length; i++){
                     that.options.push(that.arguments[i]);
                 }
             }
         }(this);
-
-
-
-        this.overlappingElements = getOverlappingElements();
-        
 
         this.border = function(style, cornerRadius){
              console.log("border");
@@ -216,8 +291,5 @@ var Jagged = (function($){
     }
 
 }(jQuery));
-
-
-
 
 
