@@ -87,7 +87,7 @@ var Jagged = (function($){
     }
 
     function findCorners(){
-        // ...todo
+        // ...todo 
     }
 
 
