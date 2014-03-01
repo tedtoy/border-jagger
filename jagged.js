@@ -1,46 +1,46 @@
 
-// ---------------------------------------------------------
-// Create seamless borders around overlapping html elements 
-// to make them appear as if they shared one common border.
-//
-// For example:
-//
-// |````````|
-// |  div1  |                      |```````````````````````|
-// |        `````````````|         |    A                  |
-// |                     ``````|   |              B        |
-// `````|     div2             |   `````````|              | 
-//      |                      |            |              |
-//      |              div3    |            ```````````````` 
-//      ``````````|            |   |`````|
-//                |            |   |  C  |
-//                ``````````````   |     |
-//                                 ```````
-//
-// For now the implementation will be based on css classes.
-// eg: 
-//    new Jagged('my-class').border('1px solid #999');
-// 
-//    var ducks = new Jagged('ducks');
-//    ducks.border('1px solid red');
-//     .. do stuff
-//    ducks.border('1px solid blue'); 
-//
-//  With options:
-//    var ducks = new Jagged('ducks', 'bottom', 'left')
-//    ducks.border('1px solid red', '4px') // 4px rounded corners
-//    
-//
-//
-// ToDo's:
-//     - Ability to round corners.
-//     - Shadows.
-//     - Only border specific sides.
-//     - Have text and inline elements.
-//       within bordered areas wrap around 
-//       overlapping elements.
-//
-// --------------------------------------------------------
+/* ---
+ Create seamless borders around overlapping html elements 
+ to make them appear as if they shared one common border.
+
+ For example:
+
+ |````````|
+ |  div1  |                      |```````````````````````|
+ |        `````````````|         |    A                  |
+ |                     ``````|   |              B        |
+ `````|     div2             |   `````````|              | 
+      |                      |            |              |
+      |              div3    |            ```````````````` 
+      ``````````|            |   |`````|
+                |            |   |  C  |
+                ``````````````   |     |
+                                 ```````
+
+ For now the implementation will be based on css classes.
+ eg: 
+    new Jagged('my-class').border('1px solid #999');
+ 
+    var ducks = new Jagged('ducks');
+    ducks.border('1px solid red');
+     .. do stuff
+    ducks.border('1px solid blue'); 
+
+  With options:
+    var ducks = new Jagged('ducks', 'bottom', 'left')
+    ducks.border('1px solid red', '4px')  4px rounded corners
+    
+
+
+ ToDo's:
+     - Ability to round corners.
+     - Shadows.
+     - Only border specific sides.
+     - Have text and inline elements.
+       within bordered areas wrap around 
+       overlapping elements.
+
+--- */
 
 var Jagged = (function($){
     
@@ -48,6 +48,7 @@ var Jagged = (function($){
 
     // Creates an object literal for each element
     // and finds all overlapping and exposed borders.
+    // maybe: findOverlaps()
     function getOverlappingElements(elems){
         var positionEls = [];
         // Save each els position in positionEls
@@ -76,7 +77,7 @@ var Jagged = (function($){
         for(var a=0; a<positionEls.length; a++){
             for(var b=0; b< positionEls.length; b++){
                 if( comparePos(positionEls[a], positionEls[b]) ){
-                    a.overlapsWith.push(positionEls[b]);
+                    positionEls[a].overlapsWith.push(positionEls[b]);
                 }
             }
             // Store the positions of the exposed sides for 
@@ -91,11 +92,11 @@ var Jagged = (function($){
     }
 
 
-// overlappingElements needs a better name //
+    // overlappingElements needs a better name //
     
     function drawAllBorders(that){
-        $.each(that.overlappingElements, function(idx,el){
-            drawBorder(el);
+        $.each(that.overlappingElements, function(idx,p){
+            drawBorder(p);
         });
     }
 
@@ -162,7 +163,7 @@ var Jagged = (function($){
         }
         $('<div/>', {
             class: "brdr",
-            style: "position: absolute;"
+            style: "position: absolute;",
             text:  "&nbsp;"
         }).appendTo($(p));
          
@@ -216,9 +217,9 @@ var Jagged = (function($){
     }
 
     // Finds the inverse of the overlapping portions for an element
-    function getNonOverlapping(overlaps, s){
+    function getNonOverlapping(overlaps, overlapType){
         var nonOverlaps = [];
-        if (s === 'h'){
+        if (overlapType === 'h'){
             var pEnd = p.right-p.left;   
         }
         var currEnd=0;
@@ -271,8 +272,9 @@ var Jagged = (function($){
         this.options=[];
 
         var __construct = function(that){
-            // elements:
+            // get elements:
             that.elements = document.getElementsByClassName(className);
+            // find overlaps:
             that.overlappingElements = getOverlappingElements(that.elements);
             // populate options:
             if(typeof that.arguments !== 'undefined'){
@@ -283,11 +285,11 @@ var Jagged = (function($){
         }(this);
 
         this.border = function(style, cornerRadius){
-             console.log("border");
-             console.log(style);
+            console.log("border");
+            console.log(style);
         };
 
-        //return this;
+        return this;
     }
 
 }(jQuery));
