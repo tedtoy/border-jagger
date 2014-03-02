@@ -210,22 +210,36 @@ var Jagged = (function($){
         });
 
         // 2. Find the non-overlapping portions:
-        p.topNonOverlaps = getNonOverlapping(p.topOverlaps,'v');
-        p.bottomNonOverlaps = getNonOverlapping(p.bottomOverlaps,'v');
-        p.leftNonOverlaps = getNonOverlapping(p.leftOverlaps,'h');
-        p.rightNonOverlaps = getNonOverlapping(p.rightOverlaps,'h');
+        //p.topNonOverlaps = getNonOverlapping(p.topOverlaps,'v');
+        //p.bottomNonOverlaps = getNonOverlapping(p.bottomOverlaps,'v');
+        //p.leftNonOverlaps = getNonOverlapping(p.leftOverlaps,'h');
+        //p.rightNonOverlaps = getNonOverlapping(p.rightOverlaps,'h');
+
+        p.topNonOverlaps = getNonOverlapping(p, 'top');
+        p.bottomNonOverlaps = getNonOverlapping(p, 'bottom');
+        p.leftNonOverlaps = getNonOverlapping(p, 'left');
+        p.rightNonOverlaps = getNonOverlapping(p, 'right');
     }
 
     // Finds the inverse of the overlapping portions for an element
-    function getNonOverlapping(overlaps, overlapType){
-        var nonOverlaps = [];
-        if (overlapType === 'h'){
-            var pEnd = p.right-p.left;   
+    // overlaps are sorted.
+    function getNonOverlapping(p, overlapType){
+        var overlaps, nonOverlaps = [], lastEnd=0, currEnd=0;
+
+        if (overlapType === 'top'){
+            overlaps = p.topOverlaps;
+        } else if ( overlapType === 'bottom' ) {
+            overlaps = p.bottomOverlaps; 
+        } else if ( overlapType === 'left' ) {
+            overlaps = p.leftOverlaps;
+        } else if ( overlapType === 'right' ) {
+            overlaps = p.rightOverlaps;
         }
-        var currEnd=0;
+        
         $.each( overlaps , function(idx, overlap){
             var thisStart = overlap[0];
             var thisEnd = overlap[1];
+            lastEnd = (thisEnd > lastEnd) ? thisEnd : lastEnd;
             if(thisStart > currEnd){
                 nonOverlaps.push([currEnd, thisStart]);
             }
@@ -233,8 +247,8 @@ var Jagged = (function($){
                 currEnd = thisEnd;
             }
         });
-        if (currEnd < pEnd){
-            nonOverlaps.push([]);
+        if (currEnd < lastEnd){
+            nonOverlaps.push([ currEnd, lastEnd]);
         }
         return nonOverlaps;
     }
