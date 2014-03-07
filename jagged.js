@@ -36,7 +36,7 @@
      - Ability to round corners.
      - Shadows.
      - Only border specific sides.
-     - Have text and inline elements.
+     - Have text and inline elements
        within bordered areas wrap around 
        overlapping elements.
 
@@ -74,17 +74,107 @@ var Jagged = (function($){
             });
         }
         // Determine overlaps. n^2 is the best I can do.
+        console.log(positionEls);
         for(var a=0; a<positionEls.length; a++){
+            var positionA = positionEls[a];
             for(var b=0; b< positionEls.length; b++){
-                if( comparePos(positionEls[a], positionEls[b]) ){
-                    positionEls[a].overlapsWith.push(positionEls[b]);
+                if(b !== a){
+                    var positionB = positionEls[b];
+                    // don't count overlaps against itself!
+                    if( comparePos(positionA, positionB) ){
+                        positionA.overlapsWith.push(positionB);
+                    }
                 }
             }
             // Store the positions of the exposed sides for 
             // each element in the 'NonOverlaps' arrays.
-            identifyNonOverlappingBorders(positionEls[a]);
+            positionA = identifyOverlappingBorders(positionA);
+            positionA = identifyNonOverlappingBorders(positionA);
+            positionEls[a] = positionA;
+            console.log(positionA);
         }
         return positionEls;
+    }
+    function identifyOverlappingBorders(p){
+        for(var a=0; a< p.overlapsWith.length; a++){
+            var p2 = p.overlapsWith[a];
+            // horizontal overlapping range:
+            var overlapH = [
+                (p2.left <= p.left) ? 0 : p2.left - p.left ,
+                (p2.right >= p.right) ? p.right - p.left : p2.right - p.left
+            ];
+            //console.log('overlaph p2left: '+String(p2.left)+' p.left: ' + String(p.left))
+            //console.log(overlapH)
+            //console.log('p'); console.log(p);
+            //console.log('p2'); console.log(p2);
+
+            // vertical overlapping range:
+            var overlapV = [
+                (p2.top <= p.top) ? 0 : p2.top - p.top,
+                (p2.bottom >= p.bottom) ? p.bottom - p.top : p2.bottom - p.top
+            ];
+            //console.log('overlapv')
+            //console.log(overlapV)
+            // overlaps top?
+            if( isBetween(p.top, p2.top, p2.bottom) ){
+                p.topOverlaps.push(overlapH);
+            }
+            // overlaps bottom?
+            if( isBetween(p.bottom, p2.top, p2.bottom) ){
+                p.bottomOverlaps.push(overlapH);
+            }
+            // overlaps left side?
+            if( isBetween(p.left, p2.left, p2.right) ){
+                p.leftOverlaps.push(overlapV);
+            }
+            // overlaps right side?
+            if( isBetween(p.right, p2.left, p2.right) ){
+                p.rightOverlaps.push(overlapV);
+            }
+        }
+        // sort overlaps
+        $.each([p.topOverlaps,p.bottomOverlaps,p.leftOverlaps,p.rightOverlaps], function(z,o){
+            o.sort(function(a,b){ return a[0]-b[0]; });
+        });
+        return p;
+    }
+    function identifyNonOverlappingBorders(p){
+        p.topNonOverlaps = getNonOverlapping(p, 'top');
+        p.bottomNonOverlaps = getNonOverlapping(p, 'bottom');
+        p.leftNonOverlaps = getNonOverlapping(p, 'left');
+        p.rightNonOverlaps = getNonOverlapping(p, 'right');
+        return p;
+    }
+    // Finds the inverse of the overlapping portions for an element
+    // overlaps are sorted.
+    function getNonOverlapping(p, overlapType){
+        console.log("overlap type: " + overlapType)
+        var overlaps, nonOverlaps = [], lastEnd=0, currEnd=0;
+        if (overlapType === 'top'){
+            overlaps = p.topOverlaps;
+        } else if ( overlapType === 'bottom' ) {
+            overlaps = p.bottomOverlaps; 
+        } else if ( overlapType === 'left' ) {
+            overlaps = p.leftOverlaps;
+        } else if ( overlapType === 'right' ) {
+            overlaps = p.rightOverlaps;
+        }
+        $.each( overlaps , function(idx, overlap){
+            var thisStart = overlap[0];
+            var thisEnd = overlap[1];
+            console.log("start: " + thisStart + " end: " + thisEnd) 
+            lastEnd = (thisEnd > lastEnd) ? thisEnd : lastEnd;
+            if(thisStart > currEnd){
+                nonOverlaps.push([currEnd, thisStart]);
+            }
+            if(thisEnd > currEnd){
+                currEnd = thisEnd;
+            }
+        });
+        if (currEnd < lastEnd){
+            nonOverlaps.push([ currEnd, lastEnd]);
+        }
+        return nonOverlaps;
     }
 
     function findCorners(){
@@ -117,7 +207,6 @@ var Jagged = (function($){
             _addBorder(p, nonoverlap, 'right');
         });
     }
-
     // Adds a div that creates a border at the given position 
     function _addBorderEl(p, nonoverlap, borderType){
         var ptop, pbottom, pleft, pright, pwidth, pheight, styleStr;
@@ -170,91 +259,8 @@ var Jagged = (function($){
     }
 
 
-
-    //function addExposedBorders(p){
-    function identifyNonOverlappingBorders(p){
-        // calls 'getNonOverlapping()'
-        // 1. First find the overlapping portions of p's edges:
-        for(var a=0; a< p.overlapsWith.length; a++){
-            var p2 = p.overlapsWith[a];
-            // horizontal overlapping range:
-            var overlapH = [
-                (p2.left <= p.left) ? 0 : p2.left - p1.left ,
-                (p2.right >= p.right) ? p.right - p.left : p2.right - p.left
-            ];
-            // vertical overlapping range:
-            var overlapV = [
-                (p2.top <= p.top) ? 0 : p2.top - p.top,
-                (p2.bottom >= p.bottom) ? p.bottom - p.top : p2.bottom - p.top
-            ];
-            // overlaps top?
-            if( isBetween(p.top, p2.top, p2.bottom) ){
-                p.topOverlaps.push(overlapH);
-            }
-            // overlaps bottom?
-            if( isBetween(p.bottom, p2.top, p2.bottom) ){
-                p.bottomOverlaps.push(overlapH);
-            }
-            // overlaps left side?
-            if( isBetween(p.left, p2.left, p2.right) ){
-                p.leftOverlaps.push(overlapV);
-            }
-            // overlaps right side?
-            if( isBetween(p.right, p2.left, p2.right) ){
-                p.rightOverlaps.push(overlapV);
-            }
-        }
-        // sort overlaps
-        $.each([p.topOverlaps,p.bottomOverlaps,p.leftOverlaps,p.rightOverlaps], function(z,o){
-            o.sort(function(a,b){ return a[0]-b[0]; });
-        });
-
-        // 2. Find the non-overlapping portions:
-        //p.topNonOverlaps = getNonOverlapping(p.topOverlaps,'v');
-        //p.bottomNonOverlaps = getNonOverlapping(p.bottomOverlaps,'v');
-        //p.leftNonOverlaps = getNonOverlapping(p.leftOverlaps,'h');
-        //p.rightNonOverlaps = getNonOverlapping(p.rightOverlaps,'h');
-
-        p.topNonOverlaps = getNonOverlapping(p, 'top');
-        p.bottomNonOverlaps = getNonOverlapping(p, 'bottom');
-        p.leftNonOverlaps = getNonOverlapping(p, 'left');
-        p.rightNonOverlaps = getNonOverlapping(p, 'right');
-    }
-
-    // Finds the inverse of the overlapping portions for an element
-    // overlaps are sorted.
-    function getNonOverlapping(p, overlapType){
-        var overlaps, nonOverlaps = [], lastEnd=0, currEnd=0;
-
-        if (overlapType === 'top'){
-            overlaps = p.topOverlaps;
-        } else if ( overlapType === 'bottom' ) {
-            overlaps = p.bottomOverlaps; 
-        } else if ( overlapType === 'left' ) {
-            overlaps = p.leftOverlaps;
-        } else if ( overlapType === 'right' ) {
-            overlaps = p.rightOverlaps;
-        }
-        
-        $.each( overlaps , function(idx, overlap){
-            var thisStart = overlap[0];
-            var thisEnd = overlap[1];
-            lastEnd = (thisEnd > lastEnd) ? thisEnd : lastEnd;
-            if(thisStart > currEnd){
-                nonOverlaps.push([currEnd, thisStart]);
-            }
-            if(thisEnd > currEnd){
-                currEnd = thisEnd;
-            }
-        });
-        if (currEnd < lastEnd){
-            nonOverlaps.push([ currEnd, lastEnd]);
-        }
-        return nonOverlaps;
-    }
-
-    // 
     function createBorderElements(){
+        // todo
         
     }
 
@@ -271,15 +277,18 @@ var Jagged = (function($){
     // Determine if p1 overlaps p2
     function comparePos(p1, p2){
         // overlap horizontally?
-        if( (p1.left >= p2.left) && (p1.left <= p2.right) ){
+        if( isBetween(p1.left, p2.left, p2.right)  ||
+            isBetween(p1.right, p2.left, p2.right) ){
             // vertically?
-            if( (p1.top >= p2.top) && (p1.top <= p2.bottom) ){
+            if( isBetween(p1.top, p2.top, p2.bottom)  ||
+                isBetween(p1.bottom, p2.top, p2.bottom) ){
                 return true;
             }
         }
         return false;
     }
 
+    // return Jagged function:
     return function(className){
        
         this.elements=[]; 
@@ -299,8 +308,7 @@ var Jagged = (function($){
         }(this);
 
         this.border = function(style, cornerRadius){
-            console.log("border");
-            console.log(style);
+            // todo
         };
 
         return this;
