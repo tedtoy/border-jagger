@@ -78,9 +78,9 @@ var Jagged = (function($){
         for(var a=0; a<positionEls.length; a++){
             var positionA = positionEls[a];
             for(var b=0; b< positionEls.length; b++){
+                // don't count overlaps against itself!
                 if(b !== a){
                     var positionB = positionEls[b];
-                    // don't count overlaps against itself!
                     if( comparePos(positionA, positionB) ){
                         positionA.overlapsWith.push(positionB);
                     }
@@ -103,8 +103,8 @@ var Jagged = (function($){
                 (p2.left <= p.left) ? 0 : p2.left - p.left ,
                 (p2.right >= p.right) ? p.right - p.left : p2.right - p.left
             ];
-            //console.log('overlaph p2left: '+String(p2.left)+' p.left: ' + String(p.left))
-            //console.log(overlapH)
+            console.log('overlaph p2left: '+String(p2.left)+' p.left: ' + String(p.left))
+            console.log(overlapH)
             //console.log('p'); console.log(p);
             //console.log('p2'); console.log(p2);
 
@@ -113,8 +113,6 @@ var Jagged = (function($){
                 (p2.top <= p.top) ? 0 : p2.top - p.top,
                 (p2.bottom >= p.bottom) ? p.bottom - p.top : p2.bottom - p.top
             ];
-            //console.log('overlapv')
-            //console.log(overlapV)
             // overlaps top?
             if( isBetween(p.top, p2.top, p2.bottom) ){
                 p.topOverlaps.push(overlapH);
@@ -148,31 +146,37 @@ var Jagged = (function($){
     // Finds the inverse of the overlapping portions for an element
     // overlaps are sorted.
     function getNonOverlapping(p, overlapType){
-        console.log("overlap type: " + overlapType)
         var overlaps, nonOverlaps = [], lastEnd=0, currEnd=0;
+        var endOfOverlapSection = 0, endOfBorder;
         if (overlapType === 'top'){
             overlaps = p.topOverlaps;
+            endOfBorder = p.right - p.left;
         } else if ( overlapType === 'bottom' ) {
-            overlaps = p.bottomOverlaps; 
+            overlaps = p.bottomOverlaps;
+            endOfBorder = p.right - p.left;
         } else if ( overlapType === 'left' ) {
             overlaps = p.leftOverlaps;
+            endOfBorder = p.bottom - p.top;
         } else if ( overlapType === 'right' ) {
             overlaps = p.rightOverlaps;
+            endOfBorder = p.bottom - p.top;
         }
         $.each( overlaps , function(idx, overlap){
-            var thisStart = overlap[0];
-            var thisEnd = overlap[1];
-            console.log("start: " + thisStart + " end: " + thisEnd) 
-            lastEnd = (thisEnd > lastEnd) ? thisEnd : lastEnd;
-            if(thisStart > currEnd){
-                nonOverlaps.push([currEnd, thisStart]);
+            var overlapStart = overlap[0];
+            var overlapEnd = overlap[1];
+            
+            // add non overlap:
+            if( overlapStart > endOfOverlapSection ){
+                nonOverlaps.push([endOfOverlapSection, overlapStart]);
             }
-            if(thisEnd > currEnd){
-                currEnd = thisEnd;
+            // extend overlap section if we need to:
+            if( overlapEnd > endOfOverlapSection ){
+                endOfOverlapSection = overlapEnd;
             }
         });
-        if (currEnd < lastEnd){
-            nonOverlaps.push([ currEnd, lastEnd]);
+        // See if there is one more non-overlap after overlaps:
+        if (endOfOverlapSection < endOfBorder){
+            nonOverlaps.push([ endOfOverlapSection, endOfBorder]);
         }
         return nonOverlaps;
     }
