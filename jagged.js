@@ -44,6 +44,11 @@
        within bordered areas wrap around 
        overlapping elements.
 
+
+       getOverlappingElements
+        --> identifyOverlappingBorders
+        --> identifyNonOverlappingBorders
+
 --- */
 
 var Jagged = (function($){
@@ -142,9 +147,14 @@ var Jagged = (function($){
         return p;
     }
     // Finds the inverse of the overlapping portions for an element.
+    // todo: needs to be more DRY
     function getNonOverlapping(p, overlapType){
-        var overlaps, nonOverlaps = [], lastEnd=0, currEnd=0;
-        var endOfOverlapSection = 0, endOfBorder;
+        var overlaps, 
+            nonOverlaps = [], 
+            lastEnd=0, 
+            currEnd=0,
+            endOfOverlapSection = 0, 
+            endOfBorder;
         if (overlapType === 'top'){
             overlaps = p.topOverlaps;
             endOfBorder = p.right - p.left;
@@ -159,11 +169,22 @@ var Jagged = (function($){
             endOfBorder = p.bottom - p.top;
         }
         $.each( overlaps , function(idx, overlap){
-            var overlapStart = overlap[0];
-            var overlapEnd = overlap[1];
+            var overlapStart = overlap[0],
+                overlapEnd = overlap[1],
+                borderStart = endOfOverlapSection,
+                borderEnd = overlapStart,
+                adjustStart = false,
+                adjustEnd = false;
             // add non overlap:
             if( overlapStart > endOfOverlapSection ){
-                nonOverlaps.push([endOfOverlapSection, overlapStart]);
+                console.log(borderStart)
+                if(borderStart !== 0){
+                    adjustStart = true;
+                }
+                if(borderEnd !== endOfBorder){
+                    adjustEnd = true;
+                }
+                nonOverlaps.push([borderStart, borderEnd, adjustStart, adjustEnd]);
             }
             // extend overlap section if we need to:
             if( overlapEnd > endOfOverlapSection ){
@@ -172,7 +193,17 @@ var Jagged = (function($){
         });
         // See if there is one more non-overlap after overlaps:
         if (endOfOverlapSection < endOfBorder){
-            nonOverlaps.push([ endOfOverlapSection, endOfBorder]);
+            var borderStart = endOfOverlapSection,
+                borderEnd = endOfBorder,
+                adjustStart = false,
+                adjustEnd = false;
+            if(borderStart !== 0){
+                adjustStart = true;
+            }
+            if(borderEnd !== endOfBorder){
+                adjustEnd = true;
+            }
+            nonOverlaps.push([ borderStart, borderEnd, adjustStart, adjustEnd]);
         }
         return nonOverlaps;
     }
@@ -183,15 +214,15 @@ var Jagged = (function($){
 
 
     // overlappingElements needs a better name //
-    function drawAllBorders(that, o){
+    function drawAllBorders(that){
         $.each(that.overlappingElements, function(idx,p){
-            drawBorder(that, p, o);
+            drawBorder(that, p);
         });
     }
     // For each element, draw its non overlapping borders
     // relative to itself:
     // todo: Use one DRY collection for non over-laps
-    function drawBorder(that, p, styleOptions){
+    function drawBorder(that, p){
         $.each(p.topNonOverlaps, function(idx,nonoverlap){
             _addBorder(that, p, nonoverlap, 'top');
         });
@@ -211,26 +242,35 @@ var Jagged = (function($){
         var ptop, pbottom, pleft, pright, pwidth, pheight, styleStr;
         var borderWidth = that.styleOptions['width'];
         var borderColor = that.styleOptions['color'];
-        if(borderType === 'top'){
-            ptop = 0;
-            pheight = borderWidth; // ?
+        
+        // todo: i am in the process of adding the border adjustments
+        // and somewhat DRYing out the codebase. but its still a little ugly.
+        if(borderType === 'top' || borderType === 'bottom'){
+            if(borderType === 'top') ptop = 0;
+            if(borderType === 'bottom') pbottom = 0;
+            pheight = borderWidth; 
             pleft = nonoverlap[0];
             pwidth = nonoverlap[1]-nonoverlap[0];
-        } else if ( borderType ==='bottom' ){
-            pbottom = 0;  
-            pheight = borderWidth; // ?
-            pleft = nonoverlap[0];
-            pwidth = nonoverlap[1]-nonoverlap[0];
-        } else if ( borderType ==='left' ){
-            pleft = 0;
+            // add adjustment for non-end borders:
+            if(nonoverlap[2]){
+                pleft = pleft - borderWidth;
+            }   
+            if(nonoverlap[3]){
+                pwidth = parseInt(pwidth) + parseInt(borderWidth);
+            }   
+        } else if ( borderType ==='left' || borderType === 'right' ){
+            if(borderType === 'left') pleft = 0;
+            if(borderType === 'right') pright = 0;
             pwidth = borderWidth;
             ptop = nonoverlap[0];
             pheight = nonoverlap[1]-nonoverlap[0];
-        } else if ( borderType ==='right' ){
-            pright = 0;
-            pwidth = borderWidth;
-            ptop = nonoverlap[0];
-            pheight = nonoverlap[1]-nonoverlap[0];
+            // add adjustment for non-end borders:
+            if(nonoverlap[2]){
+                ptop = ptop - borderWidth;
+            }   
+            if(nonoverlap[3]){
+                pheight = parseInt(pheight) + parseInt(borderWidth);
+            }   
         }
         styleStr = "position: absolute; background-color: " + borderColor + ";";
         if (typeof pheight !== 'undefined'){
@@ -303,7 +343,7 @@ var Jagged = (function($){
 
         this.styleBorders = function(styleOptions){
             that.styleOptions = styleOptions;
-            drawAllBorders(that, styleOptions);
+            drawAllBorders(that);
         };
 
     }
