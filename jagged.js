@@ -34,6 +34,10 @@
 
  ToDo's:
      - Ability to round corners.
+     - Currently, the border gets drawn inside an element,
+       but there should be options to draw on the outside of
+       the element or offset the border to be in the middle
+       of the outside and inside, if that makes sense.
      - Shadows.
      - Only border specific sides.
      - Have text and inline elements
@@ -74,7 +78,7 @@ var Jagged = (function($){
                 'bottomNonOverlaps': []
             });
         }
-        // Determine overlaps. n^2 is the best I can do.
+        // Determine overlaps. O(n^2) is the best I can do.
         for(var a=0; a<positionEls.length; a++){
             var positionA = positionEls[a];
             for(var b=0; b< positionEls.length; b++){
@@ -137,8 +141,7 @@ var Jagged = (function($){
         p.rightNonOverlaps = getNonOverlapping(p, 'right');
         return p;
     }
-    // Finds the inverse of the overlapping portions for an element
-    // overlaps are sorted.
+    // Finds the inverse of the overlapping portions for an element.
     function getNonOverlapping(p, overlapType){
         var overlaps, nonOverlaps = [], lastEnd=0, currEnd=0;
         var endOfOverlapSection = 0, endOfBorder;
@@ -158,7 +161,6 @@ var Jagged = (function($){
         $.each( overlaps , function(idx, overlap){
             var overlapStart = overlap[0];
             var overlapEnd = overlap[1];
-            
             // add non overlap:
             if( overlapStart > endOfOverlapSection ){
                 nonOverlaps.push([endOfOverlapSection, overlapStart]);
@@ -186,7 +188,6 @@ var Jagged = (function($){
             drawBorder(that, p, o);
         });
     }
-
     // For each element, draw its non overlapping borders
     // relative to itself:
     // todo: Use one DRY collection for non over-laps
@@ -255,12 +256,6 @@ var Jagged = (function($){
             class: "brdr",
             style: styleStr,
         }).appendTo($(p.el));
-    }
-
-
-    function createBorderElements(){
-        // todo
-        
     }
 
     // -- Helpers --
