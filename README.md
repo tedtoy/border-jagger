@@ -1,4 +1,4 @@
-jagged-elements
+border-jagger
 ===============
 
 Create non-overlapping borders around overlapping html elements
