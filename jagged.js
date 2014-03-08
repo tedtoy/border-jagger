@@ -56,6 +56,7 @@ var Jagged = (function($){
             var el = $(elems[i]);
             var elPos = el.offset();
             positionEls.push({
+                'el': el,
                 'left':   elPos.left,
                 'right':  elPos.left + el.width(),
                 'top':    elPos.top,
@@ -198,6 +199,7 @@ var Jagged = (function($){
     // relative to itself:
     // todo: Use one DRY collection for non over-laps
     function drawBorder(p){
+        console.log('draw border');
         $.each(p.topNonOverlaps, function(idx,nonoverlap){
             _addBorder(p, nonoverlap, 'top');
         });
@@ -212,7 +214,7 @@ var Jagged = (function($){
         });
     }
     // Adds a div that creates a border at the given position 
-    function _addBorderEl(p, nonoverlap, borderType){
+    function _addBorder(p, nonoverlap, borderType){
         var ptop, pbottom, pleft, pright, pwidth, pheight, styleStr;
         if(borderType === 'top'){
             ptop = 0;
@@ -235,7 +237,7 @@ var Jagged = (function($){
             ptop = nonoverlap[0];
             pheight = nonoverlap[1]-nonoverlap[0];
         }
-        styleStr = "position: absolute; background-color:#ccc;";
+        styleStr = "position: absolute; background-color: blue;";
         if (typeof pheight !== 'undefined'){
             styleStr += "height: " + pheight + "px;";
         }
@@ -253,13 +255,12 @@ var Jagged = (function($){
         }
         if (typeof pright !== 'undefined'){
             styleStr += "right: " + pright + "px;";
+
         }
         $('<div/>', {
             class: "brdr",
-            style: "position: absolute;",
-            text:  "&nbsp;"
-        }).appendTo($(p));
-         
+            style: styleStr,
+        }).appendTo($(p.el));
     }
 
 
@@ -297,25 +298,26 @@ var Jagged = (function($){
        
         this.elements=[]; 
         this.options=[];
-
-        var __construct = function(that){
+        var that = this;
+        var __construct__ = function(args){
             // get elements:
             that.elements = document.getElementsByClassName(className);
             // find overlaps:
             that.overlappingElements = getOverlappingElements(that.elements);
             // populate options:
-            if(typeof that.arguments !== 'undefined'){
-                for(var i = 1; i< that.arguments.length; i++){
-                    that.options.push(that.arguments[i]);
+            if(typeof args !== 'undefined'){
+                for(var i = 1; i< args.length; i++){
+                    that.options.push(args[i]);
                 }
             }
-        }(this);
+        }(arguments);
 
-        this.border = function(style, cornerRadius){
-            // todo
+        this.styleBorders = function(style, cornerRadius){
+            drawAllBorders(that);
+            //console.log("comparepos: " + comparePos(10,1));
+            
         };
 
-        return this;
     }
 
 }(jQuery));
