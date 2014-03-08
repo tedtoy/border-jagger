@@ -58,9 +58,9 @@ var Jagged = (function($){
             positionEls.push({
                 'el': el,
                 'left':   elPos.left,
-                'right':  elPos.left + el.width(),
+                'right':  elPos.left + el.outerWidth(),
                 'top':    elPos.top,
-                'bottom': elPos.top + el.height(),
+                'bottom': elPos.top + el.outerHeight(),
                 'overlapsWith': [],
 
                 'leftOverlaps': [],
@@ -75,7 +75,6 @@ var Jagged = (function($){
             });
         }
         // Determine overlaps. n^2 is the best I can do.
-        console.log(positionEls);
         for(var a=0; a<positionEls.length; a++){
             var positionA = positionEls[a];
             for(var b=0; b< positionEls.length; b++){
@@ -92,7 +91,6 @@ var Jagged = (function($){
             positionA = identifyOverlappingBorders(positionA);
             positionA = identifyNonOverlappingBorders(positionA);
             positionEls[a] = positionA;
-            console.log(positionA);
         }
         return positionEls;
     }
@@ -104,11 +102,6 @@ var Jagged = (function($){
                 (p2.left <= p.left) ? 0 : p2.left - p.left ,
                 (p2.right >= p.right) ? p.right - p.left : p2.right - p.left
             ];
-            console.log('overlaph p2left: '+String(p2.left)+' p.left: ' + String(p.left))
-            console.log(overlapH)
-            //console.log('p'); console.log(p);
-            //console.log('p2'); console.log(p2);
-
             // vertical overlapping range:
             var overlapV = [
                 (p2.top <= p.top) ? 0 : p2.top - p.top,
@@ -188,56 +181,57 @@ var Jagged = (function($){
 
 
     // overlappingElements needs a better name //
-    
-    function drawAllBorders(that){
+    function drawAllBorders(that, o){
         $.each(that.overlappingElements, function(idx,p){
-            drawBorder(p);
+            drawBorder(that, p, o);
         });
     }
 
     // For each element, draw its non overlapping borders
     // relative to itself:
     // todo: Use one DRY collection for non over-laps
-    function drawBorder(p){
-        console.log('draw border');
+    function drawBorder(that, p, styleOptions){
         $.each(p.topNonOverlaps, function(idx,nonoverlap){
-            _addBorder(p, nonoverlap, 'top');
+            _addBorder(that, p, nonoverlap, 'top');
         });
         $.each(p.bottomNonOverlaps, function(idx,nonoverlap){
-            _addBorder(p, nonoverlap, 'bottom');
+            _addBorder(that, p, nonoverlap, 'bottom');
         });
         $.each(p.leftNonOverlaps, function(idx,nonoverlap){
-            _addBorder(p, nonoverlap, 'left');
+            _addBorder(that, p, nonoverlap, 'left');
         });
         $.each(p.rightNonOverlaps, function(idx,nonoverlap){
-            _addBorder(p, nonoverlap, 'right');
+            _addBorder(that, p, nonoverlap, 'right');
         });
     }
     // Adds a div that creates a border at the given position 
-    function _addBorder(p, nonoverlap, borderType){
+    // todo: that's a lot of ugly if statements!
+    function _addBorder(that, p, nonoverlap, borderType){
         var ptop, pbottom, pleft, pright, pwidth, pheight, styleStr;
+        var borderWidth = that.styleOptions['width'];
+        var borderColor = that.styleOptions['color'];
         if(borderType === 'top'){
             ptop = 0;
-            pheight = 1; // ?
+            pheight = borderWidth; // ?
             pleft = nonoverlap[0];
             pwidth = nonoverlap[1]-nonoverlap[0];
         } else if ( borderType ==='bottom' ){
             pbottom = 0;  
-            pheight = 1; // ?
+            pheight = borderWidth; // ?
             pleft = nonoverlap[0];
             pwidth = nonoverlap[1]-nonoverlap[0];
         } else if ( borderType ==='left' ){
             pleft = 0;
-            pwidth = 1;
+            pwidth = borderWidth;
             ptop = nonoverlap[0];
             pheight = nonoverlap[1]-nonoverlap[0];
         } else if ( borderType ==='right' ){
             pright = 0;
-            pwidth = 1;
+            pwidth = borderWidth;
             ptop = nonoverlap[0];
             pheight = nonoverlap[1]-nonoverlap[0];
         }
-        styleStr = "position: absolute; background-color: blue;";
+        styleStr = "position: absolute; background-color: " + borderColor + ";";
         if (typeof pheight !== 'undefined'){
             styleStr += "height: " + pheight + "px;";
         }
@@ -312,10 +306,9 @@ var Jagged = (function($){
             }
         }(arguments);
 
-        this.styleBorders = function(style, cornerRadius){
-            drawAllBorders(that);
-            //console.log("comparepos: " + comparePos(10,1));
-            
+        this.styleBorders = function(styleOptions){
+            that.styleOptions = styleOptions;
+            drawAllBorders(that, styleOptions);
         };
 
     }

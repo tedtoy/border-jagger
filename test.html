@@ -4,8 +4,9 @@
 <style>
 
     div.testme {
-        background-color: #999;
+        background-color: #ddd;
         position: absolute;
+        padding: 10px;
     }
     /*
     div.testme::before {
@@ -19,7 +20,10 @@
     var Jag;
     $(document).ready(function(){
         Jag = new Jagged('testme', 'testoption');
-        Jag.styleBorders('1px solid red');
+        Jag.styleBorders({
+            'color': '#483D8B',
+            'width': '3' // pixels
+        });
     });
 
 </script>
@@ -30,10 +34,8 @@
 <div style="width: 200px; height: 200px; top: 200px; left:200px; " class="testme">
     div2
 </div>
-<!--
 <div style="width: 200px; height: 270px; top: 300px; left: 400px;" class="testme">
     div3
 </div>
-!-->
 
 
