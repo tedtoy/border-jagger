@@ -27,6 +27,6 @@ Jag.styleBorders({
 });
 ```
 
-![Jagged Elements](http://i.imgur.com/k6O8LxG.png)
+![Jagged Elements](http://i.imgur.com/QcARcDz.png)
 
 
