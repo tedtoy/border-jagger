@@ -3,6 +3,9 @@ border-jagger
 
 Create non-overlapping borders around overlapping html elements
 
+![Jagged Elements](http://i.imgur.com/QcARcDz.png)
+
+
 ```html
 <style>
     div.testme {
@@ -30,7 +33,6 @@ Create non-overlapping borders around overlapping html elements
 
 ```
 
-
 ```javascript
 Jag = new Jagged('testme', 
   [
@@ -44,7 +46,5 @@ Jag.styleBorders({
     'width': '2' // pixels
 });
 ```
-
-![Jagged Elements](http://i.imgur.com/QcARcDz.png)
 
 
