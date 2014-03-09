@@ -240,11 +240,10 @@ var Jagged = (function($){
     // todo: that's a lot of ugly if statements!
     function _addBorder(that, p, nonoverlap, borderType){
         var ptop, pbottom, pleft, pright, pwidth, pheight, styleStr;
-        var borderWidth = that.styleOptions['width'];
-        var borderColor = that.styleOptions['color'];
+        var borderWidth = that.styleOptions['width'],
+            borderColor = that.styleOptions['color'];
         
-        // todo: i am in the process of adding the border adjustments
-        // and somewhat DRYing out the codebase. but its still a little ugly.
+        // Needs more DRY, less ugly
         if(borderType === 'top' || borderType === 'bottom'){
             if(borderType === 'top') ptop = 0;
             if(borderType === 'bottom') pbottom = 0;
@@ -272,6 +271,7 @@ var Jagged = (function($){
                 pheight = parseInt(pheight) + parseInt(borderWidth);
             }   
         }
+        // create style string
         styleStr = "position: absolute; background-color: " + borderColor + ";";
         if (typeof pheight !== 'undefined'){
             styleStr += "height: " + pheight + "px;";
@@ -290,8 +290,22 @@ var Jagged = (function($){
         }
         if (typeof pright !== 'undefined'){
             styleStr += "right: " + pright + "px;";
-
         }
+        // Add other options:
+        for(var ee=0; ee< that.options.length; ee++){
+            styleStr += that.options[ee];
+        }
+                /*
+        $.each(arrayOptions, function(aa,o){
+            console.log("|"+o+"|")
+            console.log("type of o")
+            console.log(typeof o);
+            console.log(that.options)
+            console.log(o)
+            styleStr += o;
+        });
+        */
+        console.log(styleStr)
         $('<div/>', {
             class: "brdr",
             style: styleStr,
@@ -326,7 +340,9 @@ var Jagged = (function($){
     return function(className){
        
         this.elements=[]; 
+        this.overlappingElements=[]; 
         this.options=[];
+        this.styleOptions='';
         var that = this;
         var __construct__ = function(args){
             // get elements:
@@ -335,8 +351,12 @@ var Jagged = (function($){
             that.overlappingElements = getOverlappingElements(that.elements);
             // populate options:
             if(typeof args !== 'undefined'){
-                for(var i = 1; i< args.length; i++){
-                    that.options.push(args[i]);
+                //for(var i = 1; i< args.length; i++){
+                //    console.log("options"); console.log(args[i]);
+                //    that.options.push(args[i]);
+                //}
+                if( args.length >1){
+                    that.options = args[1];
                 }
             }
         }(arguments);
